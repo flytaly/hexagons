@@ -2,10 +2,15 @@ import * as THREE from 'three';
 import vertex from './shaders/vertex.glsl';
 import fragment from './shaders/fragment.glsl';
 import BaseSketch from '../lib/base-sketch';
+import img from '../img/bg1.jpg';
 
 export default class Sketch extends BaseSketch {
   constructor(selector) {
     super(selector, true);
+
+    document.body.style.backgroundColor = '#444444';
+    document.body.style.backgroundImage = `url(${img})`;
+    document.body.style.backgroundSize = `cover`;
 
     this.raycaster = new THREE.Raycaster();
     this.mouse = { x: 0, y: 0 };
@@ -14,6 +19,13 @@ export default class Sketch extends BaseSketch {
     this.addObjects();
     this.animate();
     this.resize();
+  }
+
+  stop() {
+    document.body.style.backgroundColor = '';
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    super.stop();
   }
 
   mouseMove() {
@@ -68,7 +80,7 @@ export default class Sketch extends BaseSketch {
       vertexShader: vertex,
       fragmentShader: fragment,
     });
-    const geometry = new THREE.PlaneGeometry(1, 1, 64, 64);
+    const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
     this.plane = new THREE.Mesh(geometry, this.material);
     this.scene.add(this.plane);
   }

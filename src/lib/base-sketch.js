@@ -5,10 +5,15 @@ export default class BaseSketch {
   constructor(selector, withOrbitControls = true) {
     this.scene = new THREE.Scene();
 
-    this.renderer = new THREE.WebGLRenderer({ alpha: true });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+    });
 
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(window.innerWidth, window.innerWidth);
+    this.width = window.innerWidth;
+    this.height = window.innerWidth;
+    this.renderer.setSize(this.width, this.height);
 
     this.container = document.getElementById(selector);
     this.container.appendChild(this.renderer.domElement);
