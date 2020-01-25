@@ -3,7 +3,9 @@
 
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform sampler2D u_texture;
 varying vec2 vUv;
+varying vec2 worldUv;
 
 float sqr3 = sqrt(3.);
 
@@ -11,6 +13,7 @@ float sqr3 = sqrt(3.);
 vec2 axialCoords(vec2 uv){
     // inverted hex-to-pixel matrix
     return vec2(uv.x * sqr3/3. - uv.y / 3., 2. * uv.y / 3.);
+
 }
 
 // https://www.redblobgames.com/grids/hexagons/#coordinates-cube
@@ -38,6 +41,9 @@ float cubeDistance(vec3 a, vec3 b) {
 
 void main()	{
     vec2 uv = vUv;
+    vec2 textureUv = worldUv.xy;
+
+    vec4 img = texture2D(u_texture, textureUv);
 
     vec3 cubes = cubeCoords(uv);
     vec3 cubesRounded = cubeRound(cubes);
@@ -46,10 +52,11 @@ void main()	{
     vec3 cubeXYZ = cubes - cubesRounded;
     vec3 cubeDist = abs(cubeXYZ.xyz - cubeXYZ.zxy);
 
-    vec3 color = vec3(0.);
 
-    float borders = smoothstep(.9, 1., max(cubeDist.x, max(cubeDist.y, cubeDist.z)));
+    float borders = max(0.1, smoothstep(.95, 1., max(cubeDist.x, max(cubeDist.y, cubeDist.z))));
 
-    // gl_FragColor = vec4(uv, 0., 1.);
-    gl_FragColor = vec4(color, borders);
+    vec3 color = vec3(.0, .0, 0.);
+    color = max(img.rgb, 0.4*borders);
+
+    gl_FragColor = vec4(color, 1.);
 }
