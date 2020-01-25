@@ -25,6 +25,7 @@ const LoadTexture = (url) =>
 export default class Sketch extends BaseSketch {
   constructor(selector) {
     super(selector, true);
+    this.renderer.setClearColor(0x1c1c1c);
     this.init();
   }
 
@@ -34,7 +35,7 @@ export default class Sketch extends BaseSketch {
     this.widthStep = this.hexSize * Math.sqrt(3);
     this.heightStep = this.hexSize * 1.5; // 2 * size * 3/4
 
-    this.hexCount = 30; // total = hexCount x hexCount
+    this.hexCount = 20; // total = hexCount x hexCount
     // Adjust hex count depending of width. width = 1000px is a default value.
     this.hexCount = Math.round((this.hexCount * this.width) / 1000);
 
@@ -44,16 +45,17 @@ export default class Sketch extends BaseSketch {
 
     this.addBgPlane();
     this.addHexagons();
-
     this.resize();
     this.animate();
+    // TODO 1: add noise
+    // TODO 2: add mouse
   }
 
   addBgPlane() {
     this.materialPlane = new MeshBasicMaterial({ map: this.texture });
     const geometry = new PlaneBufferGeometry(this.widthStep * (this.hexCount - 1.7), this.heightStep * this.hexCount, 1, 1);
     this.plane = new Mesh(geometry, this.materialPlane);
-    this.plane.position.z = -0.01;
+    this.plane.position.z = -this.widthStep / 2;
     this.scene.add(this.plane);
   }
 
@@ -73,7 +75,6 @@ export default class Sketch extends BaseSketch {
     });
 
     const geometry = new HexGeometry(this.hexSize);
-    geometry.computeTangents();
     this.hexagons = new InstancedMesh(geometry, this.materialHex, this.hexCount ** 2);
     setHexInstanceMatrix(this.hexagons, this.hexCount, this.widthStep, this.heightStep);
 

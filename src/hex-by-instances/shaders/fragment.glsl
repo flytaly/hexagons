@@ -5,8 +5,12 @@ uniform vec2 u_resolution;
 uniform float u_time;
 uniform sampler2D u_texture;
 varying vec2 vUv;
-varying vec2 worldUv;
+varying vec2 vTextureUv;
+varying vec3 worldNormal;
+varying vec3 viewDirection;
 
+float ior = 1.5;
+float a = 0.33;
 float sqr3 = sqrt(3.);
 
 // https://www.redblobgames.com/grids/hexagons/#pixel-to-hex
@@ -39,24 +43,35 @@ float cubeDistance(vec3 a, vec3 b) {
     return max(d.x, max(d.y, d.z));
 }
 
+// https://tympanus.net/codrops/2019/10/29/real-time-multiside-refraction-in-three-steps/
+float Fresnel(vec3 eyeVector, vec3 worldNormal) {
+	return pow( 1.0 + dot( eyeVector, worldNormal), 3.0 );
+}
+
+
 void main()	{
     vec2 uv = vUv;
-    vec2 textureUv = worldUv.xy;
+
+    vec3 refracted = refract(viewDirection, worldNormal, 1.0/ior);
+    vec2 textureUv = vTextureUv + refracted.xy;
 
     vec4 img = texture2D(u_texture, textureUv);
 
     vec3 cubes = cubeCoords(uv);
     vec3 cubesRounded = cubeRound(cubes);
 
-    // in cube coordiantes
+    // cube inner coordiantes
     vec3 cubeXYZ = cubes - cubesRounded;
     vec3 cubeDist = abs(cubeXYZ.xyz - cubeXYZ.zxy);
 
 
     float borders = max(0.1, smoothstep(.95, 1., max(cubeDist.x, max(cubeDist.y, cubeDist.z))));
 
-    vec3 color = vec3(.0, .0, 0.);
-    color = max(img.rgb, 0.4*borders);
+    float f = Fresnel(viewDirection, worldNormal);
 
-    gl_FragColor = vec4(color, 1.);
+    vec3 color = img.rgb;
+    color.rgb = mix(color.rgb, vec3(1.0), f);
+    color = max(color.rgb, 0.4*borders);
+
+    gl_FragColor = vec4(color, 1.0);
 }
