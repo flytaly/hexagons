@@ -4,11 +4,13 @@
 uniform float u_time;
 uniform float u_scale;
 uniform vec2 u_resolution;
+uniform vec3 u_mouse;
 
 varying vec2 vUv;
 varying vec2 vTextureUv;
 varying vec3 worldNormal;
 varying vec3 viewDirection;
+varying float vCursorDist;
 
 float sqr3 = sqrt(3.);
 
@@ -32,11 +34,24 @@ void main() {
 
 
   float t = u_time*0.5;
+  /*
   float angle = PI/4. * cos(t);
   mat4 rmat = rotationMatrix(vec3(0., 1., 0.), angle);
   p = (rmat * vec4(p, 1.)).xyz;
-
   // p.z += 0.1*(abs(sin(instanceMatrix[3].x + u_time*0.1)));
+  */
+
+  float dist = length(u_mouse - instanceMatrix[3].xyz);
+
+  float coef  = 0.;
+  if (dist <= .3) {
+    coef = 1. - dist/.3;
+    mat4 rmat = rotationMatrix(vec3(0., 1., 0.), coef * PI/4.);
+    p = (rmat * vec4(p, 1.)).xyz;
+    vCursorDist = coef;
+  } else {
+    vCursorDist = -1.;
+  }
 
   vec4 mvPosition = instanceMatrix * vec4(p, 1.0);
 

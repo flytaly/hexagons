@@ -6,9 +6,11 @@ import {
   Mesh,
   MeshBasicMaterial,
   PlaneBufferGeometry,
+  Raycaster,
   ShaderMaterial,
   TextureLoader,
   Vector2,
+  Vector3,
 } from 'three';
 import BaseSketch from '../lib/base-sketch';
 import vertex from './shaders/vertex.glsl';
@@ -43,12 +45,34 @@ export default class Sketch extends BaseSketch {
     this.texture.minFilter = LinearFilter;
     this.texture.magFilter = LinearFilter;
 
+    this.mouse = new Vector3(0, 0, 0);
+    this.aspectScale = 1;
     this.addBgPlane();
     this.addHexagons();
     this.resize();
+    this.mouseHandler();
     this.animate();
-    // TODO 1: add noise
-    // TODO 2: add mouse
+  }
+
+  mouseHandler() {
+    this.raycaster = new Raycaster();
+
+    window.addEventListener(
+      'mousemove',
+      () => {
+        this.mouse.x = (event.clientX / this.width) * 2 - 1;
+        this.mouse.y = -(event.clientY / this.height) * 2 + 1;
+
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        // calculate objects intersecting the picking ray
+        const intersects = this.raycaster.intersectObjects([this.hexagons]);
+
+        if (intersects.length > 0) {
+          this.materialHex.uniforms.u_mouse.value = intersects[0].point.multiplyScalar(1 / this.aspectScale);
+        }
+      },
+      false,
+    );
   }
 
   addBgPlane() {
@@ -68,6 +92,7 @@ export default class Sketch extends BaseSketch {
         u_resolution: { type: 'v2', value: new Vector2(this.width, this.height) },
         u_texture: { type: 't', value: this.texture },
         u_scale: { type: 'f', value: 1 },
+        u_mouse: { type: 'v3', value: new Vector3(-2, -2, 0) },
       },
       // wireframe: true,
       vertexShader: vertex,
@@ -96,9 +121,10 @@ export default class Sketch extends BaseSketch {
 
       // -1 since rows are shifted, heightStep is smaller than widthStep
       const scale = (this.hexCount - 1) * this.heightStep;
-      const aspectScale = aspect < 1 ? 1 / scale : aspect / scale;
-      this.hexagons.scale.set(aspectScale, aspectScale, 1);
-      this.plane.scale.set(aspectScale, aspectScale, 1);
+      this.aspectScale = aspect < 1 ? 1 / scale : aspect / scale;
+
+      this.hexagons.scale.set(this.aspectScale, this.aspectScale, 1);
+      this.plane.scale.set(this.aspectScale, this.aspectScale, 1);
       this.materialHex.uniforms.u_scale.value = scale;
     }
 
@@ -112,6 +138,8 @@ export default class Sketch extends BaseSketch {
 
   animate() {
     this.time += 0.05;
+    this.scene.rotation.x = this.mouse.y / 10;
+    this.scene.rotation.y = this.mouse.x / 10;
     this.materialHex.uniforms.u_time.value = this.time;
     this.render();
     requestAnimationFrame(this.animate.bind(this));

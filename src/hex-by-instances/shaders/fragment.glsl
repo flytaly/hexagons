@@ -8,6 +8,7 @@ varying vec2 vUv;
 varying vec2 vTextureUv;
 varying vec3 worldNormal;
 varying vec3 viewDirection;
+varying float vCursorDist;
 
 float ior = 1.5;
 float a = 0.33;
@@ -70,8 +71,12 @@ void main()	{
     float f = Fresnel(viewDirection, worldNormal);
 
     vec3 color = img.rgb;
-    color.rgb = mix(color.rgb, vec3(1.0), f);
+    color.rgb = mix(color.rgb, vec3(1.), f);
     color = max(color.rgb, 0.4*borders);
+    if (vCursorDist == -1.) {
+        color = vec3(dot(color.rgb, vec3(0.299, 0.587, 0.114)));
+    }
 
-    gl_FragColor = vec4(color, 1.0);
+
+    gl_FragColor = vec4(color, 1.);
 }
