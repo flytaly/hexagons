@@ -92,7 +92,7 @@ export default class Sketch extends BaseSketch {
         u_resolution: { type: 'v2', value: new Vector2(this.width, this.height) },
         u_texture: { type: 't', value: this.texture },
         u_scale: { type: 'f', value: 1 },
-        u_mouse: { type: 'v3', value: new Vector3(-2, -2, 0) },
+        u_mouse: { type: 'v3', value: new Vector3(0, 0, 0) },
       },
       // wireframe: true,
       vertexShader: vertex,
