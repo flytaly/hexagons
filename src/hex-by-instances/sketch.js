@@ -50,29 +50,30 @@ export default class Sketch extends BaseSketch {
     this.addBgPlane();
     this.addHexagons();
     this.resize();
-    this.mouseHandler();
+    this.mouseMove();
     this.animate();
   }
+  stop() {
+    super.stop();
+    window.removeEventListener('mousemove', this.mouseMoveHandler);
+  }
 
-  mouseHandler() {
+  mouseMove() {
     this.raycaster = new Raycaster();
+    this.mouseMoveHandler = () => {
+      this.mouse.x = (event.clientX / this.width) * 2 - 1;
+      this.mouse.y = -(event.clientY / this.height) * 2 + 1;
 
-    window.addEventListener(
-      'mousemove',
-      () => {
-        this.mouse.x = (event.clientX / this.width) * 2 - 1;
-        this.mouse.y = -(event.clientY / this.height) * 2 + 1;
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      // calculate objects intersecting the picking ray
+      const intersects = this.raycaster.intersectObjects([this.hexagons]);
 
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        // calculate objects intersecting the picking ray
-        const intersects = this.raycaster.intersectObjects([this.hexagons]);
+      if (intersects.length > 0) {
+        this.materialHex.uniforms.u_mouse.value = intersects[0].point.multiplyScalar(1 / this.aspectScale);
+      }
+    };
 
-        if (intersects.length > 0) {
-          this.materialHex.uniforms.u_mouse.value = intersects[0].point.multiplyScalar(1 / this.aspectScale);
-        }
-      },
-      false,
-    );
+    window.addEventListener('mousemove', this.mouseMoveHandler, false);
   }
 
   addBgPlane() {
@@ -142,6 +143,6 @@ export default class Sketch extends BaseSketch {
     this.scene.rotation.y = this.mouse.x / 10;
     this.materialHex.uniforms.u_time.value = this.time;
     this.render();
-    requestAnimationFrame(this.animate.bind(this));
+    this.rafId = requestAnimationFrame(this.animate.bind(this));
   }
 }

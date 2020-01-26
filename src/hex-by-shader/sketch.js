@@ -26,25 +26,24 @@ export default class Sketch extends BaseSketch {
     document.body.style.backgroundImage = '';
     document.body.style.backgroundSize = '';
     super.stop();
+    window.removeEventListener('mousemove', this.mouseMoveHandler);
   }
 
   mouseMove() {
     this.testPlane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.MeshBasicMaterial());
-    window.addEventListener(
-      'mousemove',
-      () => {
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        // calculate objects intersecting the picking ray
-        const intersects = this.raycaster.intersectObjects([this.testPlane]);
+    this.mouseMoveHandler = () => {
+      this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      // calculate objects intersecting the picking ray
+      const intersects = this.raycaster.intersectObjects([this.testPlane]);
 
-        if (intersects.length > 0) {
-          this.material.uniforms.u_mouse.value = intersects[0].point;
-        }
-      },
-      false,
-    );
+      if (intersects.length > 0) {
+        this.material.uniforms.u_mouse.value = intersects[0].point;
+      }
+    };
+
+    window.addEventListener('mousemove', this.mouseMoveHandler, false);
   }
 
   resize() {
@@ -93,6 +92,6 @@ export default class Sketch extends BaseSketch {
     this.material.uniforms.u_time.value = this.time;
 
     this.render();
-    requestAnimationFrame(this.animate.bind(this));
+    this.rafId = requestAnimationFrame(this.animate.bind(this));
   }
 }
