@@ -45,7 +45,12 @@ export default class Sketch extends BaseSketch {
     this.texture.minFilter = LinearFilter;
     this.texture.magFilter = LinearFilter;
 
+    this.mouseScreen = new Vector3(0, 0, 0);
     this.mouse = new Vector3(0, 0, 0);
+    this.mouseNext = new Vector3(0, 0, 0);
+    this.mouseDist = new Vector3(0, 0, 0);
+    this.cursorSpeed = 0.025;
+
     this.aspectScale = 1;
     this.addBgPlane();
     this.addHexagons();
@@ -55,25 +60,28 @@ export default class Sketch extends BaseSketch {
   }
   stop() {
     super.stop();
-    window.removeEventListener('mousemove', this.mouseMoveHandler);
+    document.removeEventListener('mousemove', this.mouseMoveHandler);
+    document.removeEventListener('mouseleave', this.mouseLeaveHandler);
   }
 
   mouseMove() {
     this.raycaster = new Raycaster();
     this.mouseMoveHandler = () => {
-      this.mouse.x = (event.clientX / this.width) * 2 - 1;
-      this.mouse.y = -(event.clientY / this.height) * 2 + 1;
+      this.mouseScreen.x = (event.clientX / this.width) * 2 - 1;
+      this.mouseScreen.y = -(event.clientY / this.height) * 2 + 1;
 
-      this.raycaster.setFromCamera(this.mouse, this.camera);
+      this.raycaster.setFromCamera(this.mouseScreen, this.camera);
       // calculate objects intersecting the picking ray
       const intersects = this.raycaster.intersectObjects([this.hexagons]);
 
       if (intersects.length > 0) {
-        this.materialHex.uniforms.u_mouse.value = intersects[0].point.multiplyScalar(1 / this.aspectScale);
+        this.mouseNext = intersects[0].point.multiplyScalar(1 / this.aspectScale);
       }
     };
+    this.mouseLeaveHandler = () => this.mouseNext.set(0, 0, 0);
 
-    window.addEventListener('mousemove', this.mouseMoveHandler, false);
+    document.addEventListener('mousemove', this.mouseMoveHandler, false);
+    document.addEventListener('mouseleave', this.mouseLeaveHandler);
   }
 
   addBgPlane() {
@@ -93,7 +101,7 @@ export default class Sketch extends BaseSketch {
         u_resolution: { type: 'v2', value: new Vector2(this.width, this.height) },
         u_texture: { type: 't', value: this.texture },
         u_scale: { type: 'f', value: 1 },
-        u_mouse: { type: 'v3', value: new Vector3(0, 0, 0) },
+        u_mouse: { type: 'v3', value: this.mouse },
       },
       // wireframe: true,
       vertexShader: vertex,
@@ -139,8 +147,16 @@ export default class Sketch extends BaseSketch {
 
   animate() {
     this.time += 0.05;
-    this.scene.rotation.x = this.mouse.y / 10;
-    this.scene.rotation.y = this.mouse.x / 10;
+
+    // mouse inertness
+    this.mouseDist.subVectors(this.mouseNext, this.mouse);
+    this.mouseDist.multiplyScalar(this.cursorSpeed);
+    this.mouse.add(this.mouseDist);
+    this.materialHex.uniforms.u_mouse.value = this.mouse;
+
+    this.scene.rotation.x = this.mouseScreen.y / 10;
+    this.scene.rotation.y = this.mouseScreen.x / 10;
+
     this.materialHex.uniforms.u_time.value = this.time;
     this.render();
     this.rafId = requestAnimationFrame(this.animate.bind(this));

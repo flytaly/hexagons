@@ -74,7 +74,7 @@ void main()	{
     color.rgb = mix(color.rgb, vec3(1.), f);
     color = max(color.rgb, 0.4*borders);
     if (vCursorDist == -1.) {
-        color = vec3(dot(color.rgb, vec3(0.299, 0.587, 0.114)));
+        color = vec3(dot(color.rgb, vec3(0.299, 0.587, 0.114)))*0.5;
     }
 
 

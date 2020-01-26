@@ -109,7 +109,7 @@ void main() {
   vec3 p = position;
 
 
-  float t = u_time*0.4;
+  float t = u_time*0.3;
   /*
   float angle = PI/4. * cos(t);
   mat4 rmat = rotationMatrix(vec3(0., 1., 0.), angle);
@@ -120,8 +120,10 @@ void main() {
   float dist = length(u_mouse - instanceMatrix[3].xyz);
 
   float coef  = 0.;
-  if (dist < .4) {
-    coef = 1. - dist/.4;
+  // float radius = 0.2 + .2*(sin(t)+1.)/2.;
+  float radius = 0.1 + .5*abs(snoise(vec3(instanceMatrix[3].x, instanceMatrix[3].y, t * 0.1)));
+  if (dist < radius) {
+    coef = 1. - dist/radius;
     coef *= snoise(vec3(instanceMatrix[3].x,instanceMatrix[3].y,t));
     mat4 rmat = rotationMatrix(vec3(0., 1., 0.), coef * PI/2.);
     p = (rmat * vec4(p, 1.)).xyz;
