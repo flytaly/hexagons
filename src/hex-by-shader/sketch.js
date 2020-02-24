@@ -21,14 +21,6 @@ export default class Sketch extends BaseSketch {
     this.resize();
   }
 
-  stop() {
-    document.body.style.backgroundColor = '';
-    document.body.style.backgroundImage = '';
-    document.body.style.backgroundSize = '';
-    super.stop();
-    window.removeEventListener('mousemove', this.mouseMoveHandler);
-  }
-
   mouseMove() {
     this.testPlane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.MeshBasicMaterial());
     this.mouseMoveHandler = () => {

@@ -58,11 +58,6 @@ export default class Sketch extends BaseSketch {
     this.mouseMove();
     this.animate();
   }
-  stop() {
-    super.stop();
-    document.removeEventListener('mousemove', this.mouseMoveHandler);
-    document.removeEventListener('mouseleave', this.mouseLeaveHandler);
-  }
 
   mouseMove() {
     this.raycaster = new Raycaster();
