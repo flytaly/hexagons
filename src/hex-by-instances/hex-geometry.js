@@ -24,7 +24,7 @@ export class HexGeometry extends BufferGeometry {
     const normals = [];
     for (let i = 0; i < vertices.length; i = i + 3) {
       uvs.push(vertices[i] / this.hexSize, vertices[i + 1] / this.hexSize);
-      normals.push(0, 0, 1);
+      normals.push(0, 0, -1);
     }
     this.setAttribute('position', new BufferAttribute(new Float32Array(vertices), 3));
     this.setAttribute('normal', new BufferAttribute(new Float32Array(normals), 3));

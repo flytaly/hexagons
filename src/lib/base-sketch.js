@@ -18,7 +18,7 @@ export default class BaseSketch {
     this.container = document.getElementById(selector);
     this.container.appendChild(this.renderer.domElement);
 
-    this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 1000);
+    this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 10000);
     this.camera.position.set(0, 0, 3);
     // this.camera.lookAt(0, 0, 0);
 

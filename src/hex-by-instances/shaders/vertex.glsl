@@ -140,7 +140,7 @@ void main() {
 
 
   vec4 worldPosition = modelMatrix * vec4(p, 1.0);
-	worldNormal = normalize(modelViewMatrix * vec4(normal, 0.)).xyz;
+	worldNormal = normalize(modelViewMatrix * vec4(-normal, 0.)).xyz;
 	viewDirection = normalize(worldPosition.xyz - cameraPosition);;
 
 	gl_Position = projectionMatrix * modelViewMatrix * mvPosition;
