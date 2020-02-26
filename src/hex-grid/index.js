@@ -16,9 +16,11 @@ export default class Sketch extends BaseSketch {
     this.hexagonGrid();
     this.floor();
     this.addLight();
+    this.mouseMove();
 
-    this.group.rotation.set(-60 * toRad, 0, 0);
+    // this.group.rotation.set(-60 * toRad, 0, 0);
     this.scene.add(this.group);
+
     this.animate();
   }
 
@@ -31,7 +33,10 @@ export default class Sketch extends BaseSketch {
     this.widthStep = this.hexSize * Math.sqrt(3);
     this.heightStep = this.hexSize * 1.5; // 2 * size * 3/4
 
-    this.camera.position.set(0, 0, 110);
+    // this.camera.position.set(0, 0, 100);
+    this.camera.position.set(-7, -70, 70);
+    this.camera.lookAt(0, 0, 0);
+
     this.renderer.shadowMap.enabled = true;
     this.camera.fov = 45;
     this.camera.updateProjectionMatrix();
@@ -92,14 +97,14 @@ export default class Sketch extends BaseSketch {
 
   addLight() {
     // this.light = new THREE.DirectionalLight(this.color, 0.4);
-    this.light = new THREE.PointLight(this.color, 1, 150);
-    this.ambientLight = new THREE.AmbientLight(this.color, 0.2);
+    this.light = new THREE.PointLight(this.color, 1.3);
+    this.ambientLight = new THREE.AmbientLight(this.color, 0.4);
 
     this.light.castShadow = true;
     this.light.shadow.bias = -0.01;
-    this.light.shadow.castShadow = true;
 
-    this.light.position.set(-20, -20, 30);
+    this.lightStartPosition = new THREE.Vector3(-20, 10, 30);
+    this.light.position.copy(this.lightStartPosition);
 
     const d = 25;
     this.light.shadow.camera.near = 1;
@@ -118,11 +123,41 @@ export default class Sketch extends BaseSketch {
     }
   }
 
+  mouseMove() {
+    this.mouseScreen = new THREE.Vector3(0, 0, 0);
+    this.raycaster = new THREE.Raycaster();
+
+    const size = 140;
+    const geometry = new THREE.PlaneBufferGeometry(size * 2, size, 1);
+    const material = new THREE.MeshBasicMaterial({
+      // color: 'green',
+      // opacity: 0.2,
+      opacity: 0,
+      transparent: true,
+      side: THREE.DoubleSide,
+    });
+    const lightPlaneMesh = new THREE.Mesh(geometry, material);
+    lightPlaneMesh.position.z = this.light.position.z;
+    this.group.add(lightPlaneMesh);
+
+    this.mouseMoveHandler = (event) => {
+      this.mouseScreen.x = (event.clientX / this.width) * 2 - 1;
+      this.mouseScreen.y = -(event.clientY / this.height) * 2 + 1;
+
+      this.raycaster.setFromCamera(this.mouseScreen, this.camera);
+      // calculate objects intersecting the picking ray
+      const intersects = this.raycaster.intersectObjects([lightPlaneMesh]);
+      if (intersects.length > 0) {
+        this.light.position.x = intersects[0].point.x;
+        this.light.position.y = intersects[0].point.y;
+      }
+    };
+
+    this.renderer.domElement.addEventListener('mousemove', this.mouseMoveHandler, false);
+  }
+
   animate() {
     this.time += 0.05;
-
-    // this.materialHex.uniforms.u_time.value = this.time;
-    // this.hexagons[10].rotation.x = 10 * Math.sin(this.time / 30);
     this.render();
     this.rafId = requestAnimationFrame(this.animate.bind(this));
   }

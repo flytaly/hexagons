@@ -61,7 +61,7 @@ export default class Sketch extends BaseSketch {
 
   mouseMove() {
     this.raycaster = new Raycaster();
-    this.mouseMoveHandler = () => {
+    this.mouseMoveHandler = (event) => {
       this.mouseScreen.x = (event.clientX / this.width) * 2 - 1;
       this.mouseScreen.y = -(event.clientY / this.height) * 2 + 1;
 
