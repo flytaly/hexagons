@@ -28,7 +28,7 @@ export default class Sketch extends BaseSketch {
     this.group = new THREE.Object3D();
 
     this.color = 0xffffff;
-    this.hexCount = 6;
+    this.hexCount = 7; // number of hexagons in the middle row/column. Should be odd number!
     this.hexSize = 5;
     this.widthStep = this.hexSize * Math.sqrt(3);
     this.heightStep = this.hexSize * 1.5; // 2 * size * 3/4
@@ -58,17 +58,23 @@ export default class Sketch extends BaseSketch {
     let x = 0;
     let y = 0;
     const simplex = new SimplexNoise();
-    for (let i = 0; i < this.hexCount; i += 1) {
-      for (let j = 0; j < this.hexCount; j += 1) {
-        x = (i + (j % 2) * 0.5 - this.hexCount / 2) * this.widthStep; // shift only even rows
-        y = (j + 0.5 - this.hexCount / 2) * this.heightStep;
+    let middle = Math.floor(this.hexCount / 2);
+    for (let r = -middle; r <= middle; r += 1) {
+      for (let q = -middle; q <= middle; q += 1) {
+        const odd = Math.abs(r) % 2;
+        const len = (this.hexCount - Math.abs(r)) / 2;
+        if (Math.abs(q) >= len + odd) continue;
+        if (odd && q === -len) continue;
+
+        x = (q + (1 - odd) * 0.5) * this.widthStep;
+        y = r * this.heightStep;
 
         const hexagon = new THREE.Mesh(geometry, this.hexMaterial);
         hexagon.position.set(x, y, 0);
         hexagon.castShadow = true;
         hexagon.receiveShadow = true;
         this.hexagons.push(hexagon);
-        const noise = Math.abs(simplex.noise2D(i, j));
+        const noise = Math.abs(simplex.noise2D(r, q));
         gsap.to(hexagon.rotation, {
           ease: 'elastic.out(1,0.3)',
           repeat: -1,
