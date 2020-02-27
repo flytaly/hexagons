@@ -1,4 +1,5 @@
 import { HexGeometry } from '../hex-by-instances/hex-geometry';
+import { BoundGeometry } from './bound-geometry';
 import BaseSketch from '../lib/base-sketch';
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -13,6 +14,8 @@ export default class Sketch extends BaseSketch {
     this.debug = true;
 
     this.init();
+
+    this.boundGeometry = {};
     this.hexagonGrid();
     this.floor();
     this.addLight();
@@ -50,11 +53,13 @@ export default class Sketch extends BaseSketch {
 
   hexagonGrid() {
     this.hexagons = [];
-    const geometry = new HexGeometry(this.hexSize);
+    this.hexGeometry = new HexGeometry(this.hexSize);
     this.hexMaterial = new THREE.MeshLambertMaterial({
       color: 0xdddddd,
       side: THREE.DoubleSide,
     });
+    const { vertexCoords } = this.hexGeometry;
+
     let x = 0;
     let y = 0;
     const simplex = new SimplexNoise();
@@ -69,12 +74,27 @@ export default class Sketch extends BaseSketch {
         x = (q + (1 - odd) * 0.5) * this.widthStep;
         y = r * this.heightStep;
 
-        const hexagon = new THREE.Mesh(geometry, this.hexMaterial);
+        const hexagon = new THREE.Mesh(this.hexGeometry, this.hexMaterial);
         hexagon.position.set(x, y, 0);
+
         hexagon.castShadow = true;
         hexagon.receiveShadow = true;
         this.hexagons.push(hexagon);
+
+        if (!this.boundGeometry.bottom && r === -middle) {
+          this.boundGeometry.bottom = new BoundGeometry({
+            x,
+            y,
+            hexPoints: vertexCoords,
+            hexesInRow: len * 2,
+            hexesInCol: this.hexCount,
+            hexSize: this.hexSize,
+            planeSize: this.hexSize * 20,
+          });
+        }
+
         const noise = Math.abs(simplex.noise2D(r, q));
+
         gsap.to(hexagon.rotation, {
           ease: 'elastic.out(1,0.3)',
           repeat: -1,
@@ -85,11 +105,20 @@ export default class Sketch extends BaseSketch {
         });
       }
     }
-
     this.group.add(...this.hexagons);
   }
 
   floor() {
+    const boundMaterial = new THREE.MeshLambertMaterial({
+      // wireframe: true,
+      // color: 0xff0000,
+      color: this.color,
+      side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(this.boundGeometry.bottom, boundMaterial);
+    mesh.receiveShadow = true;
+    this.group.add(mesh);
+
     const geometry = new THREE.PlaneBufferGeometry(this.hexSize * 20, this.hexSize * 20, this.hexSize);
     const material = new THREE.MeshLambertMaterial({
       color: this.color,

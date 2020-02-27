@@ -5,6 +5,7 @@ export class HexGeometry extends BufferGeometry {
     super();
     this.hexSize = hexSize;
     this.center = center;
+    this.vertexCoords = []; // start from the bottom point counterclockwise
     this.generateGeometry();
   }
 
@@ -17,9 +18,12 @@ export class HexGeometry extends BufferGeometry {
       vertices.push(prevX, prevY, 0);
       vertices.push(this.center.x, this.center.y, 0);
       vertices.push(x, y, 0);
+      this.vertexCoords.push([prevX, prevY]);
+
       prevX = x;
       prevY = y;
     }
+
     const uvs = [];
     const normals = [];
     for (let i = 0; i < vertices.length; i = i + 3) {
