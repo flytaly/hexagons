@@ -11,13 +11,14 @@ export default class Sketch extends BaseSketch {
   constructor(selector) {
     super(selector, true);
 
-    this.debug = true;
+    this.debug = false;
 
     this.init();
 
     this.boundGeometry = {};
     this.hexagonGrid();
     this.floor();
+    this.addObjects();
     this.addLight();
     this.mouseMove();
 
@@ -28,17 +29,23 @@ export default class Sketch extends BaseSketch {
   }
 
   init() {
+    this.time = 0;
     this.group = new THREE.Object3D();
 
     this.color = 0xffffff;
+    // this.color2 = 0x000000;
+    this.color2 = 0x3b9fa6;
     this.hexCount = 7; // number of hexagons in the middle row/column. Should be odd number!
     this.hexSize = 5;
     this.widthStep = this.hexSize * Math.sqrt(3);
     this.heightStep = this.hexSize * 1.5; // 2 * size * 3/4
+    this.floorSize = this.hexSize * this.hexCount * 10;
 
     // this.camera.position.set(0, 0, 100);
-    this.camera.position.set(-7, -70, 70);
-    this.camera.lookAt(0, 0, 0);
+    // this.camera.position.set(-7, -70, 90);
+    this.camera.position.set(0, -77, 44);
+
+    this.camera.lookAt(0, 5, 5);
 
     this.renderer.shadowMap.enabled = true;
     this.camera.fov = 45;
@@ -50,11 +57,22 @@ export default class Sketch extends BaseSketch {
       // this.scene.add(axesHelper);
     }
   }
+  addObjects() {
+    const geometry = new THREE.OctahedronBufferGeometry(5);
+    const material = new THREE.MeshPhongMaterial({
+      color: this.color,
+    });
+    this.octahedron = new THREE.Mesh(geometry, material);
+    this.octahedron.receiveShadow = true;
+    this.octahedron.castShadow = true;
+    this.octahedron.position.z = 20;
+    this.group.add(this.octahedron);
+  }
 
   hexagonGrid() {
     this.hexagons = [];
     this.hexGeometry = new HexGeometry(this.hexSize);
-    this.hexMaterial = new THREE.MeshLambertMaterial({
+    this.hexMaterial = new THREE.MeshPhongMaterial({
       color: 0xdddddd,
       side: THREE.DoubleSide,
     });
@@ -89,7 +107,7 @@ export default class Sketch extends BaseSketch {
             hexesInRow: len * 2,
             hexesInCol: this.hexCount,
             hexSize: this.hexSize,
-            planeSize: this.hexSize * 20,
+            planeSize: this.floorSize,
           });
         }
 
@@ -109,37 +127,43 @@ export default class Sketch extends BaseSketch {
   }
 
   floor() {
-    const boundMaterial = new THREE.MeshLambertMaterial({
+    // const boundMaterial = new THREE.MeshLambertMaterial({
+    // Mesh Lambert doesn't work properly for some reasons
+    const boundMaterial = new THREE.MeshPhongMaterial({
       // wireframe: true,
       // color: 0xff0000,
+      flatShading: true,
       color: this.color,
-      side: THREE.DoubleSide,
+      side: THREE.BackSide,
     });
     const mesh = new THREE.Mesh(this.boundGeometry.bottom, boundMaterial);
     mesh.receiveShadow = true;
     this.group.add(mesh);
-
-    const geometry = new THREE.PlaneBufferGeometry(this.hexSize * 20, this.hexSize * 20, this.hexSize);
-    const material = new THREE.MeshLambertMaterial({
-      color: this.color,
+    const geometry = new THREE.PlaneBufferGeometry(this.floorSize, this.floorSize, 1);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x3b9fa6,
       side: THREE.DoubleSide,
     });
     const plane = new THREE.Mesh(geometry, material);
-    plane.receiveShadow = true;
     plane.position.z = -this.hexSize * 3;
     this.group.add(plane);
   }
 
   addLight() {
-    // this.light = new THREE.DirectionalLight(this.color, 0.4);
-    this.light = new THREE.PointLight(this.color, 1.3);
-    this.ambientLight = new THREE.AmbientLight(this.color, 0.4);
+    // this.light = new THREE.DirectionalLight(this.color, 1.4);
+    // this.light = new THREE.SpotLight(this.color, 1.4, 200);
+    this.light = new THREE.PointLight(this.color1, 1.4, 200);
+    this.light2 = new THREE.PointLight(this.color2, 3);
+    this.ambientLight = new THREE.AmbientLight(this.color1, 0);
 
     this.light.castShadow = true;
-    this.light.shadow.bias = -0.01;
+    this.light.shadow.bias = -0.005;
+    this.light2.castShadow = true;
+    this.light2.shadow.bias = -0.005;
 
-    this.lightStartPosition = new THREE.Vector3(-20, 10, 30);
+    this.lightStartPosition = new THREE.Vector3(-10, 5, 30);
     this.light.position.copy(this.lightStartPosition);
+    this.light2.position.copy(new THREE.Vector3(0, 0, -10));
 
     const d = 25;
     this.light.shadow.camera.near = 1;
@@ -149,11 +173,15 @@ export default class Sketch extends BaseSketch {
     this.light.shadow.camera.top = d;
     this.light.shadow.camera.bottom = -d;
 
-    this.group.add(this.ambientLight).add(this.light);
+    this.group
+      .add(this.ambientLight)
+      .add(this.light)
+      .add(this.light2);
 
     if (this.debug) {
       // this.group.add(new THREE.DirectionalLightHelper(this.light, 100, 'red'));
-      this.group.add(new THREE.PointLightHelper(this.light, 100, 'blue'));
+      this.group.add(new THREE.PointLightHelper(this.light, 100, 'red'));
+      this.group.add(new THREE.PointLightHelper(this.light2, 100, 'yellow'));
       this.group.add(new THREE.CameraHelper(this.light.shadow.camera));
     }
   }
@@ -162,17 +190,17 @@ export default class Sketch extends BaseSketch {
     this.mouseScreen = new THREE.Vector3(0, 0, 0);
     this.raycaster = new THREE.Raycaster();
 
-    const size = 140;
-    const geometry = new THREE.PlaneBufferGeometry(size * 2, size, 1);
+    const geometry = new THREE.PlaneBufferGeometry(this.floorSize, this.floorSize, 1);
     const material = new THREE.MeshBasicMaterial({
       // color: 'green',
       // opacity: 0.2,
       opacity: 0,
       transparent: true,
-      side: THREE.DoubleSide,
+      // side: THREE.DoubleSide,
     });
+
     const lightPlaneMesh = new THREE.Mesh(geometry, material);
-    lightPlaneMesh.position.z = this.light.position.z;
+    lightPlaneMesh.position.z = 1;
     this.group.add(lightPlaneMesh);
 
     this.mouseMoveHandler = (event) => {
@@ -192,7 +220,9 @@ export default class Sketch extends BaseSketch {
   }
 
   animate() {
-    this.time += 0.05;
+    this.time = this.time + 0.05;
+    this.octahedron.rotation.z = this.time / 10;
+    // this.octahedron.rotateOnAxis([1, 0, 0], 0.01);
     this.render();
     this.rafId = requestAnimationFrame(this.animate.bind(this));
   }
