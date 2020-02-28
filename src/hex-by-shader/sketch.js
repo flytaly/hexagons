@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import vertex from './shaders/vertex.glsl';
 import fragment from './shaders/fragment.glsl';
 import BaseSketch from '../lib/base-sketch';
-import img from '../img/bg1.jpg';
+// import img from '../img/bg1.jpg';
 
 export default class Sketch extends BaseSketch {
   constructor(selector) {
     super(selector, true);
 
     document.body.style.backgroundColor = '#444444';
-    document.body.style.backgroundImage = `url(${img})`;
+    // document.body.style.backgroundImage = `url(${img})`;
     document.body.style.backgroundSize = `cover`;
 
     this.raycaster = new THREE.Raycaster();
