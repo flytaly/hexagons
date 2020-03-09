@@ -6,7 +6,7 @@ export default class BaseSketch {
     this.scene = new THREE.Scene();
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      // antialias: true,
       alpha: true,
     });
 
